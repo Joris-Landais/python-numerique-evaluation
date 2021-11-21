@@ -27,7 +27,7 @@
 #
 # Vous allez travaillez dans ce projet sur des données réelles concernant des défauts observés dans des soudures. Ces défauts sont problématiques car ils peuvent occasionner la rupture prématurée d'une pièce, ce qui peut avoir de lourdes conséquences. De nombreux travaux actuels visent donc à caractériser la **nocivité** des défauts. La morphologie de ces défauts est un paramètre qui influe au premier ordre sur cette nocivité.
 #
-# Dans ce projet, vous aurez l'occasion de manipuler des données qui caractérisent la morphologie de défauts réels observés dans une soudure volontairement ratée ! Votre mission est de mener une analyse permettant de classer les défauts selon leur forme : en effet, deux défauts avec des morphologies similaires auront une nocivité comparable.
+# Dans ce projet, vous aurez l'occasion de manipuler des données qui caractérisent la morphologie de défauts réels observés dans une soudure volontairement ratée ! Votre mission est de mener une analyse permettant de classer les défauts selon leur forme : en effet, deux défauts avec des morphologies similaires auront une nocivité comparable. 
 
 # %% [markdown]
 # ### Import des librairies numériques
@@ -35,8 +35,6 @@
 # Importez les librairies numériques utiles au projet, pour le début du projet, il s'agit de `pandas`, `numpy` et `pyplot` de `matplotlib`.
 
 # %%
-from utilities import plot_defect
-from importlib import reload
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -54,19 +52,26 @@ import matplotlib.pyplot as plt
 # Affichez la forme et les deux dernières lignes de la data-frame.
 
 # %%
-df = pd.read_csv("defect_data.csv", usecols=range(10), index_col="id")
-df.tail(2)
+
+df=pd.read_csv("defect_data.csv",usecols=range(10),index_col="id")
+#mycolumns = []
+#for idx,column in enumerate(df.columns):
+    #mycolumns.append(column)
+
+#forme=doc[mycolumns[:9]]
+          
+df.tail(2) 
 
 # %% [markdown]
-# ### Parenthèse sur descripteurs morphologiques
+# ### Parenthèse sur descripteurs morphologiques 
 #
 # **Note: cette section vous donne du contexte quant à la signification des données que vous manipulez et la façon dont elles ont été acquises. Si certains aspects vous semblent nébuleux, cela ne vous empêchera pas de finir le projet !**
 #
-# Vous allez manipuler dans ce projet des descripteurs morphologiques. Ces descripteurs sont ici utilisés pour caractériser des défauts, observés par tomographie aux rayons X dans des soudures liant deux pièces métalliques. La tomographie consiste à prendre un jeu de radiographies (comme chez le médecin, avec un rayonnement plus puissant) en faisant tourner la pièce entre chaque prise de vue. En appliquant un algorithme de reconstruction idoine à l'ensemble des clichés, il est possible de remonter à une image 3D des pièces scannées. Plus la zone que l'on traverse est dense plus elle est claire (comme chez le médecin : vos os apparaissent plus clair que vos muscles). Dans notre cas, le constraste entre les défauts constitués d'air et le métal est très marqué : on observe donc les défauts en noir et le métal en gris. Un défaut est donc un amas de voxels (l'équivalent des pixels pour une image 3D) noirs. Sur l'image ci-dessous, les défauts ont été extraits et sont représentés en 3D par les volumes rouges.
+# Vous allez manipuler dans ce projet des descripteurs morphologiques. Ces descripteurs sont ici utilisés pour caractériser des défauts, observés par tomographie aux rayons X dans des soudures liant deux pièces métalliques. La tomographie consiste à prendre un jeu de radiographies (comme chez le médecin, avec un rayonnement plus puissant) en faisant tourner la pièce entre chaque prise de vue. En appliquant un algorithme de reconstruction idoine à l'ensemble des clichés, il est possible de remonter à une image 3D des pièces scannées. Plus la zone que l'on traverse est dense plus elle est claire (comme chez le médecin : vos os apparaissent plus clair que vos muscles). Dans notre cas, le constraste entre les défauts constitués d'air et le métal est très marqué : on observe donc les défauts en noir et le métal en gris. Un défaut est donc un amas de voxels (l'équivalent des pixels pour une image 3D) noirs. Sur l'image ci-dessous, les défauts ont été extraits et sont représentés en 3D par les volumes rouges. 
 #
 # <img src="media/defects_3D.png" width="400px">
 #
-# Vous voyez qu'ils sont nombreux, de taille et de forme variées. À chaque volume rouge que vous observez correspond une ligne de votre `DataFrame` qui contient les descripteurs morphologiques du-dit défaut.
+# Vous voyez qu'ils sont nombreux, de taille et de forme variées. À chaque volume rouge que vous observez correspond une ligne de votre `DataFrame` qui contient les descripteurs morphologiques du-dit défaut. 
 #
 #
 # #### Descripteur $r_1$ (`radius1`)
@@ -75,13 +80,13 @@ df.tail(2)
 #  R_{eq} = \left(\frac{3V}{4\pi}\right)^{1/3}
 # \end{equation*}
 #
-# On définit ensuite le *rayon moyen* $R_m$ du défaut comme la moyenne sur tous les voxels de la distance au centre de gravité du défaut.
+# On définit ensuite le *rayon moyen* $R_m$ du défaut comme la moyenne sur tous les voxels de la distance au centre de gravité du défaut. 
 #
 # $R_{eq}$ et $R_m$ portent une information sur la taille du défaut. En les combinant comme suit:
 # \begin{equation*}
 #  r_1 = \frac{R_{eq} - R_m}{R_m}
 # \end{equation*}
-# on la fait disparaître : $r_1$ vaut 1/3 pour une sphère quel que soit son rayon.
+# on la fait disparaître : $r_1$ vaut 1/3 pour une sphère quel que soit son rayon. 
 #
 # **Note :** vous aurez remarqué que $r_1$ est donc sans dimension.
 #
@@ -90,15 +95,15 @@ df.tail(2)
 # \begin{equation}
 #  I_{xy} = -\sum\limits_{v\in\rm{defect}} (x(v)-\bar{x})(y(v)-\bar{y})\qquad \text{avec } \bar{x} = \frac{1}{N}\sum\limits_{v\in\rm{defect}} x(v) \text{ et } \bar{y} = \frac{1}{N}\sum\limits_{v\in\rm{defect}} y(v)
 # \end{equation}
-# Cette matrice est symétrique réelle, elle peut donc être diagonalisée. Les trois valeurs propres obtenues $I_1 \geq I_2 \geq I_3$ sont les moments d'inertie du défaut dans son repère principal d'inertie. Ces derniers portent de manière intrinsèque une information sur le volume du défaut. Pour la faire disparaître, il suffit de normaliser ces moments comme suit :
+# Cette matrice est symétrique réelle, elle peut donc être diagonalisée. Les trois valeurs propres obtenues $I_1 \geq I_2 \geq I_3$ sont les moments d'inertie du défaut dans son repère principal d'inertie. Ces derniers portent de manière intrinsèque une information sur le volume du défaut. Pour la faire disparaître, il suffit de normaliser ces moments comme suit : 
 #
 # \begin{equation}
 #  \lambda_i = \frac{I_i}{I_1+I_2+I_3}
 # \end{equation}
 #
-# On obtient alors trois indicateurs $\lambda_1 \geq \lambda_2 \geq \lambda_3$ vérifiant notamment $\lambda_1 + \lambda_2 + \lambda_3 = 1$ ce qui explique que l'on ne garde que les deux premiers. En utilisant les propriétés des moments d'inertie, on peut montrer que les points obtenus se situent dans le triangle formé par $(1/3, 1/3)$, $(1/2, 1/4)$ et $(1/2, 1/2)$ dans le plan $(\lambda_1, \lambda_2)$. Vous pourrez vérifier cela dans la suite !
+# On obtient alors trois indicateurs $\lambda_1 \geq \lambda_2 \geq \lambda_3$ vérifiant notamment $\lambda_1 + \lambda_2 + \lambda_3 = 1$ ce qui explique que l'on ne garde que les deux premiers. En utilisant les propriétés des moments d'inertie, on peut montrer que les points obtenus se situent dans le triangle formé par $(1/3, 1/3)$, $(1/2, 1/4)$ et $(1/2, 1/2)$ dans le plan $(\lambda_1, \lambda_2)$. Vous pourrez vérifier cela dans la suite ! 
 #
-# La position du point dans le triangle renseigne sur sa forme *globale*, comme indiqué par l'image suivante :
+# La position du point dans le triangle renseigne sur sa forme *globale*, comme indiqué par l'image suivante : 
 # ∑
 # <img src="media/l1_l2.png" width="400px">
 #
@@ -108,25 +113,25 @@ df.tail(2)
 #
 # #### Sphéricité (`sphericity`)
 #
-# L'indicateur de sphéricité permet de calculer l'écart d'un défaut à une sphère. On utilise ici la caractéristique de la sphère qui minimise la surface extérieure pour un volume donné. La grandeur :
+# L'indicateur de sphéricité permet de calculer l'écart d'un défaut à une sphère. On utilise ici la caractéristique de la sphère qui minimise la surface extérieure pour un volume donné. La grandeur : 
 # \begin{equation*}
 # I_S = \frac{6\sqrt{\pi}V}{S^{3/2}}
 # \end{equation*}
-# où $V$ est le volume du défaut et $S$ sa surface vaut 1 pour une sphère et est inférieur à 1 sinon.
+# où $V$ est le volume du défaut et $S$ sa surface vaut 1 pour une sphère et est inférieur à 1 sinon. 
 #
 # #### Indicateurs basés sur la mesure de la courbure (`varCurv`, `intCurv`)
 #
 # Les deux courbures principales $\kappa_1$ et $\kappa_2$ sont calculées en chaque point de la surface des défauts ([ici pour les plus curieux](https://fr.wikipedia.org/wiki/Courbure_principale)). Ces courbures permettent de caractériser la forme locale du défaut. Elle sont combinées pour calculer la courbure moyenne $H = (\kappa_1+\kappa_2)/2$ et la courbure de Gauss $\gamma = \kappa_1\kappa_2$. Pour s'affranchir de l'information sur la taille (pour une sphère de rayon $R$, on a en tout point $\kappa_1 = \kappa_2 = 1/R$), les défauts sont normalisés en volume avant d'en calculer les courbures.
 # Les indicateurs retenus sont les suivants:
 #
-#  - la variance de la courbure de Gauss (colonne `varCurv`) $Var(H)$ ;
-#  - l'intégrale de $\gamma$ sur la surface du défaut(colonne `intCurv`) $\int_S \gamma dS$.
-#
+#  - la variance de la courbure de Gauss (colonne `varCurv`) $Var(H)$ ; 
+#  - l'intégrale de $\gamma$ sur la surface du défaut(colonne `intCurv`) $\int_S \gamma dS$. 
+#  
 # Ces indicateurs valent respectivement $0$ et $4\pi$ pour une sphère.
 #
-# #### Indicateurs sur la boite englobante $(\beta_1, \beta_2)$ (`b1`, `b2`)
+# #### Indicateurs sur la boite englobante $(\beta_1, \beta_2)$ (`b1`, `b2`) 
 #
-# Finalement, c'est une information sur la boite englobante du défaut dans son repère principal d'inertie qui est cachée dans $(\beta_1, \beta_2)$. En notant $B_1, B_2, B_3$ les dimensions (décroissantes) de la boite englobante, on réalise la même normalisation que pour les moments d'inertie :
+# Finalement, c'est une information sur la boite englobante du défaut dans son repère principal d'inertie qui est cachée dans $(\beta_1, \beta_2)$. En notant $B_1, B_2, B_3$ les dimensions (décroissantes) de la boite englobante, on réalise la même normalisation que pour les moments d'inertie : 
 # \begin{equation}
 #  \beta_i = \frac{B_i}{B_1+B_2+B_3}
 # \end{equation}
@@ -136,17 +141,19 @@ df.tail(2)
 # %% [markdown]
 # ## Visualisation des défauts
 #
-# Pour que vous saissiez un peu mieux la signification des descripteurs morphologiques, nous avons concocté une petite fonction utilitaire qui vous permettra de visualiser les défauts. Pour que vous puissiez interagir avec `pyplot`, il nous est imposé de changer le backend avec la commande `%matplotlib notebook` et de recharger le module. Pour revenir dans le mode de visualisation précédent, vous devrez évaluer la cellule qui contient la commande `%matplotlib inline` qui arrive un peu plus tard !
+# Pour que vous saissiez un peu mieux la signification des descripteurs morphologiques, nous avons concocté une petite fonction utilitaire qui vous permettra de visualiser les défauts. Pour que vous puissiez interagir avec `pyplot`, il nous est imposé de changer le backend avec la commande `%matplotlib notebook` et de recharger le module. Pour revenir dans le mode de visualisation précédent, vous devrez évaluer la cellule qui contient la commande `%matplotlib inline` qui arrive un peu plus tard !  
 #
 # *Nous n'avons malheureusement pas trouvé de solution pour que ce changement soit transparent pour vous... :(*
 #
-# Amusez vous à chercher des défauts **extrêmes** pour comprendre. Par exemple le défaut qui maximise $\lambda_2$ sera celui qui a la forme la plus *filaire* alors que celui qui minimise aura la forme la plus *plate*. Pourquoi ne pas jeter un coup d'oeil au défaut le moins convexe ?
+# Amusez vous à chercher des défauts **extrêmes** pour comprendre. Par exemple le défaut qui maximise $\lambda_2$ sera celui qui a la forme la plus *filaire* alors que celui qui minimise aura la forme la plus *plate*. Pourquoi ne pas jeter un coup d'oeil au défaut le moins convexe ? 
 
 # %%
-# Ne touchez pas à ça c'est pour la visualisation interactive !
+# Ne touchez pas à ça c'est pour la visualisation interactive ! 
 # %matplotlib notebook
+from importlib import reload
+from utilities import plot_defect
 reload(plt)
-# À partir de maintenant vous pouvez vous amuser !
+# À partir de maintenant vous pouvez vous amuser ! 
 
 # On récupère un id intéressant
 id_to_plot = df.index[df['b1'].argmax()]
@@ -156,10 +163,10 @@ print(df.loc[id_to_plot])
 plot_defect(id_to_plot)
 
 # %% [markdown]
-# N'oubliez pas d'aller rendre visite au défaut avec l'id `4022` qui a une forme rigolote, avec ses petites excroissances.
+# N'oubliez pas d'aller rendre visite au défaut avec l'id `4022` qui a une forme rigolote, avec ses petites excroissances. 
 
 # %%
-# Le défaut 4022 !
+# Le défaut 4022 ! 
 print(df.loc[4022])
 plot_defect(4022)
 
@@ -167,10 +174,10 @@ plot_defect(4022)
 # On vous parlait juste avant de défauts de morphologie proche ! Et si une simple distance euclidienne en dimension 9 fonctionnait ? Calculez le défaut le plus proche du défaut `4022` dans l'espace de dimension 9, et tracez-le ! Se ressemblent-ils ?
 
 # %%
-df1 = df-df.loc[4022]
-mat = df1.to_numpy()
-dist = np.apply_along_axis(np.linalg.norm, 1, mat)
-df1 = df1.assign(dist=dist)
+df1=df-df.loc[4022]
+mat=df1.to_numpy()
+dist=np.apply_along_axis(np.linalg.norm, 1, mat)
+df1 = df1.assign(dist = dist)
 df1 = df1.drop(index=4022)
 df1
 
@@ -183,8 +190,8 @@ plot_defect(min_ind)
 # %% [markdown]
 # **Eh non!** Le défaut le plus proche du défaut `4022` est une patatoïde quelconque. Deux explications sont possibles :
 #  * soit la distance euclidienne n'est pas pertinente ici ;
-#  * soit le défaut `4022` est le seul avec des petites excroissances...
-# Je vous laisse aller voir le défaut `796` pour trancher entre les deux propositions..
+#  * soit le défaut `4022` est le seul avec des petites excroissances... 
+# Je vous laisse aller voir le défaut `796` pour trancher entre les deux propositions.. 
 #
 
 # %%
@@ -207,7 +214,7 @@ reload(plt)
 # %% [markdown]
 # ### Tracé d'un histogramme
 #
-# Écrire une fonction `histogram` qui trace l'histogramme d'une série de points.
+# Écrire une fonction `histogram` qui trace l'histogramme d'une série de points. 
 #
 #
 # Par exemple l'appel `histogram(df['radius1'], nbins=10)` devrait renvoyer quelque chose qui ressemble à ceci:
@@ -215,7 +222,7 @@ reload(plt)
 # <img src="media/defects-histogram.png" width="400px">
 
 # %%
-def histogram(fonct, nbins=10):
+def histogram(fonct,nbins=10):
     """affiche un histogramme
     fonct: fonction qu'on veut afficher
     nbins: nombre de colonne de l'histogramme
@@ -252,7 +259,7 @@ histogram(df[['radius1']], nbins=10)
 # <img src="media/defects-histogram2.png" width="400px">
 
 # %%
-def histogram2(fonct, nbins=10, xlabel='x', ylabel='occurrences', hist_kwargs={'color': 'b'}):
+def histogram2(fonct,nbins=10 ,xlabel='x' , ylabel='occurrences' ,hist_kwargs={'color': 'b'}):
     """affiche un histogramme
     fonct: fonction qu'on veut afficher
     nbins: nombre de colonne de l'histogramme
@@ -260,7 +267,7 @@ def histogram2(fonct, nbins=10, xlabel='x', ylabel='occurrences', hist_kwargs={'
     ylabel: légend en y
     hist_kwargs: dict indiquant la couleur de l'histogramme
     """
-    plt.hist(fonct, bins=nbins, color=hist_kwargs['color'])
+    plt.hist(fonct, bins=nbins,color=hist_kwargs['color'])
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
     plt.show()
@@ -273,8 +280,8 @@ def histogram2(fonct, nbins=10, xlabel='x', ylabel='occurrences', hist_kwargs={'
 
 if 'histogram2' in globals():
     histogram2(df['radius1'], nbins=10,
-               xlabel='radius1', ylabel='occurrences',
-               hist_kwargs={'color': 'red'})
+           xlabel='radius1', ylabel='occurrences',
+           hist_kwargs={'color': 'red'})
 else:
     print("vous avez choisi de ne pas faire le bonus")
 
@@ -282,7 +289,7 @@ else:
 # %% [markdown]
 # ### Tracé de nuages de points
 #
-# Écrire une fonction `correlation_plot` qui permet de tracer le nuage de points entre deux séries de données.
+# Écrire une fonction `correlation_plot` qui permet de tracer le nuage de points entre deux séries de données. 
 # L'appel de cette fontion comme suit `correlation_plot(df['lambda1'], df['lambda2'])` devrait donner une image ressemblant à celle-ci :
 #
 # Ces tracés illustrent le *degré de similarité* des colonnes. Notons, qu'il existe des indices de similarité comme par exemple: la covariance, le coefficient de corrélation de Pearson...
@@ -295,14 +302,14 @@ def correlation_plot(fonct1, fonct2):
     x = list(fonct1)
     y = list(fonct2)
 
-    plt.scatter(x, y, s=10)
+    plt.scatter(x,y,s=10)
 
     plt.title('...')
     plt.xlabel('...')
     plt.ylabel('...')
 
-    plt.show()
 
+    plt.show()
 
 # %%
 # pour vérifier
@@ -311,11 +318,11 @@ correlation_plot(df['lambda1'], df['lambda2'])
 
 # %% [markdown]
 # #### *Bonus* les nuages de points pour l'utilisateur casse-pieds (ou daltonien ;) )
-# Modifier la fonction `correlation_plot` pour que l'utilisateur puisse préciser des noms pour les axes, et choisir l'aspect des points tracés (couleur, taille, forme, ...).
+# Modifier la fonction `correlation_plot` pour que l'utilisateur puisse préciser des noms pour les axes, et choisir l'aspect des points tracés (couleur, taille, forme, ...). 
 #
 # par exemple en appelant
 # ```python
-# correlation_plot2(df['lambda1'], df['lambda2'],
+# correlation_plot2(df['lambda1'], df['lambda2'], 
 #                   xlabel='lambda1', ylabel='lambda2',
 #                   plot_kwargs={'marker': 'x', 'color': 'red'})
 # ```
@@ -324,33 +331,35 @@ correlation_plot(df['lambda1'], df['lambda2'])
 # <img src="media/defects-correlation2.png" width="400px">
 
 # %%
-def correlation_plot2(fonct1, fonct2, xlabel='lambda1', ylabel='lambda2', plot_kwargs={'marker': 'x', 'color': 'red'}):
+def correlation_plot2(fonct1, fonct2, xlabel='lambda1', ylabel='lambda2',plot_kwargs={'marker': 'x', 'color': 'red'}):
     x = list(fonct1)
     y = list(fonct2)
 
-    plt.scatter(
-        x, y, s=30, color=plot_kwargs['color'], marker=plot_kwargs['marker'])
+    plt.scatter(x,y,s=30,color=plot_kwargs['color'],marker=plot_kwargs['marker'])
 
     plt.title('...')
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
 
 
+    
+
 # %%
-# pour vérifier
+# pour vérifier 
+
 # seulement si la fonction est définie
 if 'correlation_plot2' in globals():
-    correlation_plot2(df['lambda1'], df['lambda2'],
+    correlation_plot2(df['lambda1'], df['lambda2'], 
                       xlabel='lambda1', ylabel='lambda2',
                       plot_kwargs={'marker': 'x', 'color': 'red'})
 else:
-    print("vous avez choisi de ne pas faire le bonus")
+    print("vous avez choisi de ne pas faire le bonus")    
 
 # %% [markdown]
 # #### *Bonus 2* Tracer le triangle d'inertie en plus
 #
-# On vous disait plus tôt que les points dans le plan $(\lambda_1, \lambda2)$ sont forcément dans le triangle formé par $(1/3, 1/3)$, $(1/2, 1/4)$ et $(1/2, 1/2)$.
-# Essayez de superposer les données au triangle pour mettre cela en évidence !
+# On vous disait plus tôt que les points dans le plan $(\lambda_1, \lambda2)$ sont forcément dans le triangle formé par $(1/3, 1/3)$, $(1/2, 1/4)$ et $(1/2, 1/2)$. 
+# Essayez de superposer les données au triangle pour mettre cela en évidence ! 
 # Le résultat pourrait ressembler à ceci :
 #
 # <img src="media/defects-correlation3.png" width="400px">
@@ -358,13 +367,13 @@ else:
 # (Vous pouvez faire ce bonus sans avoir fait le précédent)
 
 # %%
-correlation_plot2(df['lambda1'], df['lambda2'],
-                  xlabel='lambda1', ylabel='lambda2',
-                  plot_kwargs={'marker': 'x', 'color': 'red'})
-x = [1/3, 1/2, 1/2, 1/3]
-y = [1/3, 1/4, 1/2, 1/3]
+correlation_plot2(df['lambda1'], df['lambda2'], 
+                      xlabel='lambda1', ylabel='lambda2',
+                      plot_kwargs={'marker': 'x', 'color': 'red'})
+x=[1/3,1/2,1/2,1/3]
+y=[1/3,1/4,1/2,1/3]
 
-plt.plot(x, y)
+plt.plot(x,y)
 plt.axis('equal')
 plt.show()
 
@@ -372,9 +381,9 @@ plt.show()
 # %% [markdown]
 # ### Affichage de tous les plots des colonnes
 #
-# Écrire une fonction `plot2D` qui prend en argument une dataframe et qui affiche
+# Écrire une fonction `plot2D` qui prend en argument une dataframe et qui affiche 
 # * les histogrammes des colonnes
-# * les plots des corrélations des couples des colonnes
+# * les plots des corrélations des couples des colonnes  
 # n'affichez qu'une seule fois les corrélations par couple de colonnes
 #
 # avec `plot2D(df[['radius1', 'lambda1', 'lambda2']])` vous devriez obtenir quelque chose comme ceci
@@ -383,19 +392,19 @@ plt.show()
 
 # %%
 def plot2D(fonctions):
-    head = list(fonctions.head(0))
-    size = len(head)
+    head=list(fonctions.head(0))
+    size=len(head)
     for fonct in fonctions:
         plt.hist(df[fonct], bins=100)
         plt.xlabel(fonct)
         plt.ylabel('Frequency')
         plt.show()
-    size = len(list(fonctions.head(0)))
+    size=len(list(fonctions.head(0)))
     for i in range(size):
-        for j in range(i):
-            x = list(fonctions.iloc[:, i])
-            y = list(fonctions.iloc[:, j])
-            plt.scatter(x, y, s=10)
+        for j in range (i): 
+            x = list(fonctions.iloc[:,i])
+            y = list(fonctions.iloc[:,j])
+            plt.scatter(x,y,s=10)
             plt.xlabel(head[i])
             plt.ylabel(head[j])
             plt.show()
@@ -403,9 +412,11 @@ def plot2D(fonctions):
 # %%
 
 
+
 # %%
 
 # pour corriger
+
 plot2D(df[['radius1', 'lambda1', 'lambda2']])
 
 
@@ -421,64 +432,68 @@ plot2D(df[['radius1', 'lambda1', 'lambda2']])
 # <img src="media/defects-matrix.png" width="500px">
 
 # %%
-def scatter_matrix1(fonctions, nbins=100, hist_kwargs={'fc': 'g'}):
-    head = list(fonctions.head(0))
-    size = len(head)
-    fig, axs = plt.subplots(3, 3, figsize=(15, 15))
-    dia = 0
+def scatter_matrix1(fonctions,nbins=100, hist_kwargs={'fc': 'g'}):
+    head=list(fonctions.head(0))
+    size=len(head)
+    fig, axs = plt.subplots(3, 3,figsize=(15, 15))
+    dia=0
     for fonct in fonctions:
-        axs[dia, dia].hist(df[fonct], bins=nbins, color=hist_kwargs['fc'])
-        axs[dia, dia].set_xlabel(fonct)
-        axs[dia, dia].set_ylabel('Frequency')
-        dia += 1
-
+        axs[dia,dia].hist(df[fonct], bins=nbins,color=hist_kwargs['fc'])
+        axs[dia,dia].set_xlabel(fonct)
+        axs[dia,dia].set_ylabel('Frequency')
+        dia+=1
+        
+            
+   
     for i in range(size):
-        for j in range(size):
-            x = list(fonctions.iloc[:, i])
-            y = list(fonctions.iloc[:, j])
-            axs[j, i].scatter(x, y, s=10, color='black')
-            axs[j, i].set_xlabel(head[i])
-            axs[j, i].set_ylabel(head[j])
-
+        for j in range (size): 
+            x = list(fonctions.iloc[:,i])
+            y = list(fonctions.iloc[:,j])
+            axs[j,i].scatter(x,y,s=10,color='black')
+            axs[j,i].set_xlabel(head[i])
+            axs[j,i].set_ylabel(head[j])
+            
+    
     fig.tight_layout()
     plt.show()
 
 
 # %%
-def scatter_matrix(fonctions, nbins=100, hist_kwargs={'fc': 'g'}):
-    head = list(fonctions.head(0))
-    size = len(head)
-    fig, axs = plt.subplots(size, size, figsize=(15, 15))
+def scatter_matrix(fonctions,nbins=100, hist_kwargs={'fc': 'g'}):
+    head=list(fonctions.head(0))
+    size=len(head)
+    fig, axs = plt.subplots(size, size,figsize=(15, 15))        
     for i in range(size):
-        for j in range(size):
-            if i == j:
-                axs[i, j].hist(df[head[i]], bins=nbins,
-                               color=hist_kwargs['fc'])
+        for j in range (size): 
+            if i==j:
+                axs[i,j].hist(df[head[i]], bins=nbins,color=hist_kwargs['fc'])
+            
             else:
-                x = list(fonctions.iloc[:, i])
-                y = list(fonctions.iloc[:, j])
-                axs[j, i].scatter(x, y, s=10, color='black')
-            if i != size-1 and j > 0:
-                axs[i, j].tick_params(
-                    left=False, bottom=False, labelleft=False, labelbottom=False)
-
-    for n in range(size-1):
-        axs[n, 0].tick_params(left=True, bottom=False,
-                              labelleft=True, labelbottom=False)
-        axs[size-1, 1+n].tick_params(left=False, bottom=True,
-                                     labelleft=False, labelbottom=True)
-
-    [axs[size-1, n].set_xlabel(head[n])for n in range(size)]
-
-    [axs[n, 0].set_ylabel(head[n])for n in range(size)]
-
+                x = list(fonctions.iloc[:,i])
+                y = list(fonctions.iloc[:,j])
+                axs[j,i].scatter(x,y,s=10,color='black')
+            if i!=size-1 and j>0:
+                axs[i,j].tick_params(left=False,bottom=False,labelleft=False,labelbottom=False)
+            
+           
+    for n in range (size-1):
+        axs[n,0].tick_params(left=True,bottom=False,labelleft=True,labelbottom=False)
+        axs[size-1,1+n].tick_params(left=False,bottom=True,labelleft=False,labelbottom=True)
+        
+    [axs[size-1,n].set_xlabel(head[n])for n in range (size) ]
+            
+    [axs[n,0].set_ylabel(head[n])for n in range (size) ]      
+    
     fig.tight_layout()
     plt.show()
 
-
 # %%
-scatter_matrix(df[['radius1', 'lambda1', 'b2']],
-               nbins=100, hist_kwargs={'fc': 'g'})
+# pour vérifier        axs[dia,dia].tick_params(left=False,bottom=False,labelleft=False,labelbottom=False)
+
+
+
+
+scatter_matrix(df[['radius1', 'lambda1', 'b2']], nbins=100, hist_kwargs={'fc': 'g'})
 
 # %% [markdown]
 # ### Corrélations entre les données
@@ -492,7 +507,7 @@ scatter_matrix(df[['radius1', 'lambda1', 'b2']],
 scatter_matrix(df[:], nbins=100, hist_kwargs={'fc': 'g'})
 
 # %% [markdown]
-# Plottez la corrélation qui me semble la plus frappante est celle entre b2 et lambda 2. Les points semble s'aligner sur une droite ce qui démontre bien une corrélation.
+# Plottez la corrélation qui me semble la plus frappante est celle entre b2 et lambda 2. Les points semble s'aligner sur une droite ce qui démontre bien une corrélation. 
 
 # %%
 correlation_plot(df['b2'], df['lambda2'])
@@ -513,9 +528,9 @@ correlation_plot(df['b2'], df['lambda2'])
 # Construisez une matrice des niveaux de corrélation des caractéristiques. Elle doit être carrée de taille 9x9.
 
 # %%
-matrix_X = df.to_numpy()
-matrix_XT = np.transpose(matrix_X)
-C = np.dot(matrix_XT, matrix_X)
+matrix_X=df.to_numpy()
+matrix_XT=np.transpose(matrix_X)
+C=np.dot(matrix_XT,matrix_X)
 C
 
 
@@ -526,7 +541,7 @@ C
 # Calculez à l'aide du module `numpy.linalg` les valeurs propres et les vecteurs propres de la matrice $C$. Cette dernière est symétrique définie positive par construction, toutes ses valeurs propres sont strictement positives.
 
 # %%
-eigv, vect = np.linalg.eig(C)
+eigv,vect=np.linalg.eig(C)
 
 
 # %% [markdown]
@@ -536,10 +551,10 @@ eigv, vect = np.linalg.eig(C)
 # Tracez les différentes valeurs propres calculées en utilisant un axe logarithmique.
 
 # %%
-X = [a for a in range(len(eigv))]
-Y = [np.log10(a) for a in eigv]
-plt.plot(X, Y, color='black')
-plt.scatter(X, Y, color='black')
+X=[a for a in range(len(eigv))]
+Y=[np.log10(a) for a in eigv]
+plt.plot(X,Y,color = 'black')
+plt.scatter(X,Y,color = 'black')
 
 
 # %%
@@ -559,12 +574,12 @@ plt.scatter(X, Y, color='black')
 # $\alpha_i$ peut être interprété comme *la part d'information du jeu de données initial contenu dans les $i$ premières composantes principales*.
 
 # %%
-eigv_sort = np.sort(eigv)[::-1]
-alpha = eigv_sort.copy()
-for i in range(len(eigv_sort)):
-    alpha[i] = sum(eigv_sort[:i+1])/sum(eigv_sort)
-plt.plot(X, alpha, color='black')
-plt.scatter(X, alpha, color='black')
+eigv_sort=np.sort(eigv)[::-1]
+alpha=eigv_sort.copy()
+for i in range (len(eigv_sort)):
+    alpha[i]=sum(eigv_sort[:i+1])/sum(eigv_sort)
+plt.plot(X,alpha,color = 'black')
+plt.scatter(X,alpha,color = 'black')
 
 alpha
 
@@ -575,27 +590,26 @@ alpha
 #
 # Quelle est la quantité d'information contenue par cette composante ?
 #
-# Pratiquement toute l'information ! C'est trop beau pour être vrai non ?
+# Pratiquement toute l'information ! C'est trop beau pour être vrai non ? 
 #
-# Affichez les coefficients de cette composante principale. Que remarquez vous ? (*hint* cherchez la caractéristique dont le coefficient est le plus important en valeur absolue)
+# Affichez les coefficients de cette composante principale. Que remarquez vous ? (*hint* cherchez la caractéristique dont le coefficient est le plus important en valeur absolue) 
 #
-# En observant les données correspondant à cette caractéristique, avez-vous une idée de ce qui s'est passé ?
+# En observant les données correspondant à cette caractéristique, avez-vous une idée de ce qui s'est passé ? 
 
 # %%
-max = np.argmax(eigv)
-print("valeur propre maximal", eigv[max],
-      "\nvecteur propre associé", vect[max])
-# Cette valeur propre contient 99% de l'informations
+max=np.argmax(eigv)
+print("valeur propre maximal",eigv[max],"\nvecteur propre associé",vect[max])
+#Cette valeur propre contient 99% de l'informations 
 
-coo = np.argmax(C)
-print((coo+1)//9, 61-coo//9*9)
-print(
-    "On en déduit que les coordonnées sont donc (7,7) \nLe coefficient le plus important est", C[7, 7])
-print("Les coefficients de cette composante sont", C[:, 7])
+coo=np.argmax(C)
+print((coo+1)//9,61-coo//9*9)
+print("On en déduit que les coordonnées sont donc (7,7) \nLe coefficient le plus important est",C[7,7])
+print("Les coefficients de cette composante sont", C[:,7])
+
 
 
 # %% [markdown]
-# On remarque que la caractéristique dont le coefficient est le plus important l'ai également avec des autres coefficient. Les coefficients de cette composante ont une grande disparité et demande à être normalisé. En effet, étant donné qu'ils ont une valeur beaucoup plus importante que les autres coefficients lors des analyses il dissimule les variations des autres coefficients.
+# On remarque que la caractéristique dont le coefficient est le plus important l'ai également avec des autres coefficient. Les coefficients de cette composante ont une grande disparité et demande à être normalisé. En effet, étant donné qu'ils ont une valeur beaucoup plus importante que les autres coefficients lors des analyses il dissimule les variations des autres coefficients. 
 # matrice C = matrice des produits scalaire
 #
 #
@@ -603,50 +617,50 @@ print("Les coefficients de cette composante sont", C[:, 7])
 # %% [markdown]
 # ## ACP sur les caractéristiques standardisées
 #
-# Dans la section précédente, la première composante principale ne prenait en compte que la caractéristique de plus grande variance. Un moyen de s'affranchir de ce problème consiste à **standardiser** les données. Pour un échantillon $Y$ de taille $N$, la variable standardisée correspondante est $Y_{std}=(Y-\bar{Y})/\sigma(Y)$ où $\bar{Y}$ est la moyenne empirique de l'échantillon et $\sigma(Y)$ son écart type empirique.
+# Dans la section précédente, la première composante principale ne prenait en compte que la caractéristique de plus grande variance. Un moyen de s'affranchir de ce problème consiste à **standardiser** les données. Pour un échantillon $Y$ de taille $N$, la variable standardisée correspondante est $Y_{std}=(Y-\bar{Y})/\sigma(Y)$ où $\bar{Y}$ est la moyenne empirique de l'échantillon et $\sigma(Y)$ son écart type empirique. 
 #
-# **Notez que** dans notre cas, il faut réaliser la standardisation **caractéristique par caractéristique** (soit colonne par colonne). Si vous n'y avez pas encore pensé, refaites un petit tour sur le cours d'agrégation pour faire ça de manière super efficace ! ;)
+# **Notez que** dans notre cas, il faut réaliser la standardisation **caractéristique par caractéristique** (soit colonne par colonne). Si vous n'y avez pas encore pensé, refaites un petit tour sur le cours d'agrégation pour faire ça de manière super efficace ! ;) 
 #
 # Menez la même étude que précédement (i.e. à partir de la section `Analyse en composantes principales`) jusqu'à tracer l'évolution des $\alpha_i$.
 
 # %%
 
-Y_mean = matrix_X.sum(axis=0)*1/(len(matrix_X))
-Y_standard_deviation = matrix_X.std(0)
+Y_mean=matrix_X.sum(axis=0)*1/(len(matrix_X))
+Y_standard_deviation=matrix_X.std(0)
 
-Y_std = (matrix_X-Y_mean)/Y_standard_deviation
+Y_std=(matrix_X-Y_mean)/Y_standard_deviation
 Y_std
 
 
-matrix_YT = np.transpose(Y_std)
-C_Y = np.dot(matrix_YT, Y_std)
+matrix_YT=np.transpose(Y_std)
+C_Y=np.dot(matrix_YT,Y_std)
 
-Y_eigv, Y_vect = np.linalg.eig(C_Y)
+Y_eigv,Y_vect=np.linalg.eig(C_Y)
 
-
-# %%
-X = [a for a in range(len(Y_eigv))]
-Y = [np.log10(a) for a in Y_eigv]
-plt.plot(X, Y, color='black')
-plt.scatter(X, Y, color='black')
 
 # %%
-Y_eigv_sort = np.sort(Y_eigv)[::-1]
-Y_alpha = Y_eigv_sort.copy()
-for i in range(len(Y_eigv_sort)):
-    Y_alpha[i] = sum(Y_eigv_sort[:i+1])/sum(Y_eigv_sort)
-plt.plot(X, Y_alpha, color='black')
-plt.scatter(X, Y_alpha, color='black')
+X=[a for a in range(len(Y_eigv))]
+Y=[np.log10(a) for a in Y_eigv]
+plt.plot(X,Y,color = 'black')
+plt.scatter(X,Y,color = 'black')
+
+# %%
+Y_eigv_sort=np.sort(Y_eigv)[::-1]
+Y_alpha=Y_eigv_sort.copy()
+for i in range (len(Y_eigv_sort)):
+    Y_alpha[i]=sum(Y_eigv_sort[:i+1])/sum(Y_eigv_sort)
+plt.plot(X,Y_alpha,color = 'black')
+plt.scatter(X,Y_alpha,color = 'black')
 
 # %% [markdown]
 # ### Importance des composantes principales
 #
-# Quelle part d'information est contenue dans les 3 premières composantes principales ?
+# Quelle part d'information est contenue dans les 3 premières composantes principales ? 
 #
 
 # %%
 Y_alpha[2]
-# 86% de l'information est contenu par la 3 première composantes
+#86% de l'information est contenu par la 3 première composantes 
 
 # %% [markdown]
 # Cette part d'information est satisfaisante car nous avons tout de même réduit notre dimension de 9 à 3.
@@ -662,45 +676,48 @@ Y_alpha[2]
 
 # %%
 
-P1 = Y*np.transpose(Y_vect[0])
-P2 = Y*np.transpose(Y_vect[1])
-P3 = Y*np.transpose(Y_vect[2])
+P1=Y*np.transpose(Y_vect[0])
+P2=Y*np.transpose(Y_vect[1])
+P3=Y*np.transpose(Y_vect[2])
 
-print(P1, P2, P3)
-correlation_plot(P1, P2, xlabel='P1', ylabel='P2')
+print(P1,P2,P3)
+correlation_plot(P1,P2,xlabel='P1',ylabel='P2')
 
-correlation_plot(P1, P3, xlabel='P1', ylabel='P3')
-P1_ = np.sort(P1)
-P2_ = np.sort(P2)
-P3_ = np.sort(P3)
-correlation_plot(P1_, P2_, xlabel='P1', ylabel='P2')
+correlation_plot(P1,P3,xlabel='P1',ylabel='P3')
+P1_=np.sort(P1)
+P2_=np.sort(P2)
+P3_=np.sort(P3)
+correlation_plot(P1_,P2_,xlabel='P1',ylabel='P2')
 
-correlation_plot(P1_, P3_, xlabel='P1', ylabel='P3')
+correlation_plot(P1_,P3_,xlabel='P1',ylabel='P3')
 
 # %% [markdown]
-# Tracez les nuages de points correspondants dans les plans (P1, P2) et (P1, P3).
+# Tracez les nuages de points correspondants dans les plans (P1, P2) et (P1, P3). 
 
 # %% [markdown]
 # ## La conclusion
 #
-# Reprenez maintenant le défaut `4022` et cherchez son plus proche voisin en utilisant la distance euclidienne dans l'espace des composantes principales. Que constatez-vous ?
+# Reprenez maintenant le défaut `4022` et cherchez son plus proche voisin en utilisant la distance euclidienne dans l'espace des composantes principales. Que constatez-vous ? 
 
 # %%
 # %matplotlib notebook
+from importlib import reload
 reload(plt)
+from utilities import plot_defect
+from importlib import reload
 
 # %%
-Y_mean_tab = df.sum(axis=0)*1/(len(df))
-Y_standard_deviation_tab = df.std(0)
+Y_mean_tab=df.sum(axis=0)*1/(len(df))
+Y_standard_deviation_tab=df.std(0)
 
-Y_std_tab = (df-Y_mean_tab)/Y_standard_deviation_tab
+Y_std_tab=(df-Y_mean_tab)/Y_standard_deviation_tab
 
 
 # %%
-Y_std_tab_1 = Y_std_tab-Y_std_tab.loc[4022]
-mat_Y = Y_std_tab_1.to_numpy()
-dist_Y = np.apply_along_axis(np.linalg.norm, 1, mat_Y)
-Y_std_tab_1 = Y_std_tab_1.assign(dist=dist_Y)
+Y_std_tab_1=Y_std_tab-Y_std_tab.loc[4022]
+mat_Y=Y_std_tab_1.to_numpy()
+dist_Y=np.apply_along_axis(np.linalg.norm, 1, mat_Y)
+Y_std_tab_1 = Y_std_tab_1.assign(dist = dist_Y)
 Y_std_tab_1 = Y_std_tab_1.drop(index=4022)
 min_ind = Y_std_tab_1.index[Y_std_tab_1['dist'].argmin()]
 print(Y_std_tab_1.loc[min_ind])

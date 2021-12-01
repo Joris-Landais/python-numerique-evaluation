@@ -149,7 +149,7 @@ reload(plt)
 # À partir de maintenant vous pouvez vous amuser !
 
 # On récupère un id intéressant
-id_to_plot = df.index[df['b1'].argmax()]
+id_to_plot = df.index[df['convexity'].argmin()]
 # On affiche à l'écran les valeurs de ses descripteurs
 print(df.loc[id_to_plot])
 # On l'affiche
@@ -172,12 +172,10 @@ mat = df1.to_numpy()
 dist = np.apply_along_axis(np.linalg.norm, 1, mat)
 df1 = df1.assign(dist=dist)
 df1 = df1.drop(index=4022)
-df1
 
 # %%
 min_ind = df1.index[df1['dist'].argmin()]
 print(df1.loc[min_ind])
-
 plot_defect(min_ind)
 
 # %% [markdown]
@@ -215,19 +213,25 @@ reload(plt)
 # <img src="media/defects-histogram.png" width="400px">
 
 # %%
-def histogram(fonct, nbins=10):
-    """affiche un histogramme
-    fonct: fonction qu'on veut afficher
-    nbins: nombre de colonne de l'histogramme
+def histogram(fonct, nbins):
     """
+    Displays a histogram
+
+    Parameters:
+        funct (pandas.core.series.Series): function we want to display
+        nbins (int): number of histogram column
+
+    Returns:
+        nothing 
+   """
     plt.hist(fonct, bins=nbins)
     plt.show()
 
 
 # %%
 # pour vérifier
-
 histogram(df['radius1'], nbins=10)
+
 
 # %%
 # pour vérifier
@@ -252,14 +256,20 @@ histogram(df[['radius1']], nbins=10)
 # <img src="media/defects-histogram2.png" width="400px">
 
 # %%
-def histogram2(fonct, nbins=10, xlabel='x', ylabel='occurrences', hist_kwargs={'color': 'b'}):
-    """affiche un histogramme
-    fonct: fonction qu'on veut afficher
-    nbins: nombre de colonne de l'histogramme
-    xlabel: légend en x
-    ylabel: légend en y
-    hist_kwargs: dict indiquant la couleur de l'histogramme
+def histogram2(fonct, nbins, xlabel=None, ylabel=None, hist_kwargs=None):
     """
+    Displays a histogram
+
+    Parameters:
+        funct (pandas.core.series.Series): function we want to display
+        nbins (int): number of histogram column
+        xlabel (str): legend in x
+        ylabel (str): legend in y
+        hist_kwargs (dic): indicating the color of the histogram
+
+    Returns:
+        nothing 
+   """
     plt.hist(fonct, bins=nbins, color=hist_kwargs['color'])
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
@@ -273,7 +283,7 @@ def histogram2(fonct, nbins=10, xlabel='x', ylabel='occurrences', hist_kwargs={'
 
 if 'histogram2' in globals():
     histogram2(df['radius1'], nbins=10,
-               xlabel='radius1', ylabel='occurrences',
+                     xlabel='radius1',ylabel='occurrences',
                hist_kwargs={'color': 'red'})
 else:
     print("vous avez choisi de ne pas faire le bonus")
@@ -291,9 +301,19 @@ else:
 # <img src="media/defects-correlation.png" width="400px">
 
 # %%
-def correlation_plot(fonct1, fonct2):
-    x = list(fonct1)
-    y = list(fonct2)
+def correlation_plot(fonctx, foncty):
+    """
+    Displays a point cloud
+
+    Parameters:
+        functx (pandas.core.series.Series): first series of data that we want to put in x
+        functx (pandas.core.series.Series): second series of data that we want to put in there
+
+    Returns:
+        nothing 
+   """
+    x = list(fonctx)
+    y = list(foncty)
 
     plt.scatter(x, y, s=10)
 
@@ -324,9 +344,24 @@ correlation_plot(df['lambda1'], df['lambda2'])
 # <img src="media/defects-correlation2.png" width="400px">
 
 # %%
-def correlation_plot2(fonct1, fonct2, xlabel='lambda1', ylabel='lambda2', plot_kwargs={'marker': 'x', 'color': 'red'}):
-    x = list(fonct1)
-    y = list(fonct2)
+def correlation_plot2(fonctx, foncty, xlabel=None, ylabel=None, plot_kwargs=None):
+    """
+    Displays a custom point cloud
+
+    Parameters:
+        functx (pandas.core.series.Series): first series of data that we want to put in x
+        functx (pandas.core.series.Series): second series of data that we want to put in there
+        xlabel, ylabel (str): represent respectively the str of the abscissa and the ordinate
+        plot_kwargs (dic):
+            -'marker '(str): type of marker desired
+            -'color '(str): desired point color
+
+    Returns:
+        nothing 
+
+    """
+    x = list(fonctx)
+    y = list(foncty)
 
     plt.scatter(
         x, y, s=30, color=plot_kwargs['color'], marker=plot_kwargs['marker'])
@@ -334,7 +369,8 @@ def correlation_plot2(fonct1, fonct2, xlabel='lambda1', ylabel='lambda2', plot_k
     plt.title('...')
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
-
+    
+    
 
 # %%
 # pour vérifier
@@ -360,11 +396,12 @@ else:
 # %%
 correlation_plot2(df['lambda1'], df['lambda2'],
                   xlabel='lambda1', ylabel='lambda2',
-                  plot_kwargs={'marker': 'x', 'color': 'red'})
+                  plot_kwargs={'marker': '.', 'color': 'black'})
+
 x = [1/3, 1/2, 1/2, 1/3]
 y = [1/3, 1/4, 1/2, 1/3]
 
-plt.plot(x, y)
+plt.plot(x, y,"--", color="red", marker=".")
 plt.axis('equal')
 plt.show()
 
@@ -382,25 +419,35 @@ plt.show()
 # <img src="media/defects-plot2d.png" width="200px">
 
 # %%
-def plot2D(fonctions):
-    head = list(fonctions.head(0))
+def plot2D(functions):
+    """
+    Attach:
+        -The column histograms
+        -The correlations plots of the pairs of columns display only once the correlations per pair of columns
+
+    Parameters:
+        functions (pandas.core.series.Series): series of points
+
+    Returns:
+        nothing 
+    """
+
+    head = list(functions.head(0))
     size = len(head)
-    for fonct in fonctions:
-        plt.hist(df[fonct], bins=100)
-        plt.xlabel(fonct)
+    for funct in functions:
+        plt.hist(df[funct], bins=100)
+        plt.xlabel(funct)
         plt.ylabel('Frequency')
         plt.show()
-    size = len(list(fonctions.head(0)))
+    size = len(list(functions.head(0)))
     for i in range(size):
         for j in range(i):
-            x = list(fonctions.iloc[:, i])
-            y = list(fonctions.iloc[:, j])
+            x = list(functions.iloc[:, i])
+            y = list(functions.iloc[:, j])
             plt.scatter(x, y, s=10)
             plt.xlabel(head[i])
             plt.ylabel(head[j])
             plt.show()
-
-# %%
 
 
 # %%
@@ -421,32 +468,21 @@ plot2D(df[['radius1', 'lambda1', 'lambda2']])
 # <img src="media/defects-matrix.png" width="500px">
 
 # %%
-def scatter_matrix1(fonctions, nbins=100, hist_kwargs={'fc': 'g'}):
-    head = list(fonctions.head(0))
-    size = len(head)
-    fig, axs = plt.subplots(3, 3, figsize=(15, 15))
-    dia = 0
-    for fonct in fonctions:
-        axs[dia, dia].hist(df[fonct], bins=nbins, color=hist_kwargs['fc'])
-        axs[dia, dia].set_xlabel(fonct)
-        axs[dia, dia].set_ylabel('Frequency')
-        dia += 1
+def scatter_matrix(functions, nbins, hist_kwargs=None):
+    """
+    Attach:
+     -on the diagonal the histograms of the columns
+     -in the other positions the plots of the correlations of the pairs of the columns
 
-    for i in range(size):
-        for j in range(size):
-            x = list(fonctions.iloc[:, i])
-            y = list(fonctions.iloc[:, j])
-            axs[j, i].scatter(x, y, s=10, color='black')
-            axs[j, i].set_xlabel(head[i])
-            axs[j, i].set_ylabel(head[j])
+    Parameters:
+        functions (pandas.core.series.Series): series of points
+        nbins (int): histogram definitions
+        hist_kwargs (dic): 'fc' (str): color of histograms
 
-    fig.tight_layout()
-    plt.show()
-
-
-# %%
-def scatter_matrix(fonctions, nbins=100, hist_kwargs={'fc': 'g'}):
-    head = list(fonctions.head(0))
+    Returns:
+        nothing 
+    """
+    head = list(functions.head(0))
     size = len(head)
     fig, axs = plt.subplots(size, size, figsize=(15, 15))
     for i in range(size):
@@ -455,8 +491,8 @@ def scatter_matrix(fonctions, nbins=100, hist_kwargs={'fc': 'g'}):
                 axs[i, j].hist(df[head[i]], bins=nbins,
                                color=hist_kwargs['fc'])
             else:
-                x = list(fonctions.iloc[:, i])
-                y = list(fonctions.iloc[:, j])
+                x = list(functions.iloc[:, i])
+                y = list(functions.iloc[:, j])
                 axs[j, i].scatter(x, y, s=10, color='black')
             if i != size-1 and j > 0:
                 axs[i, j].tick_params(
@@ -495,7 +531,8 @@ scatter_matrix(df[:], nbins=100, hist_kwargs={'fc': 'g'})
 # Plottez la corrélation qui me semble la plus frappante est celle entre b2 et lambda 2. Les points semble s'aligner sur une droite ce qui démontre bien une corrélation.
 
 # %%
-correlation_plot(df['b2'], df['lambda2'])
+help(correlation_plot2)
+correlation_plot2(df['b2'], df['lambda2'], xlabel="b2",ylabel="lambda2")
 
 
 # %% [markdown]
@@ -516,7 +553,7 @@ correlation_plot(df['b2'], df['lambda2'])
 matrix_X = df.to_numpy()
 matrix_XT = np.transpose(matrix_X)
 C = np.dot(matrix_XT, matrix_X)
-C
+"Obtient donc une matrice c de taille 9x9 = ",C
 
 
 # %% [markdown]
@@ -526,7 +563,7 @@ C
 # Calculez à l'aide du module `numpy.linalg` les valeurs propres et les vecteurs propres de la matrice $C$. Cette dernière est symétrique définie positive par construction, toutes ses valeurs propres sont strictement positives.
 
 # %%
-eigv, vect = np.linalg.eig(C)
+eigv, vect = np.linalg.eig(C) #On détermine les valeurs propres et les vecteurs propres
 
 
 # %% [markdown]
@@ -540,9 +577,10 @@ X = [a for a in range(len(eigv))]
 Y = [np.log10(a) for a in eigv]
 plt.plot(X, Y, color='black')
 plt.scatter(X, Y, color='black')
+#plt.yscale("log")
+plt.xlabel("Puissance de 10")
+plt.ylabel("log des valeurs propres")
 
-
-# %%
 
 # %% [markdown]
 # ### Analyse de l'importance relative des composantes principales
@@ -565,6 +603,8 @@ for i in range(len(eigv_sort)):
     alpha[i] = sum(eigv_sort[:i+1])/sum(eigv_sort)
 plt.plot(X, alpha, color='black')
 plt.scatter(X, alpha, color='black')
+plt.xlabel("i")
+plt.ylabel("alpha i")
 
 alpha
 
@@ -592,11 +632,13 @@ print((coo+1)//9, 61-coo//9*9)
 print(
     "On en déduit que les coordonnées sont donc (7,7) \nLe coefficient le plus important est", C[7, 7])
 print("Les coefficients de cette composante sont", C[:, 7])
+print("la composante principale correspond à la projection dans l'axe principale")
+print(C@np.transpose(vect[0]))
 
 
 # %% [markdown]
-# On remarque que la caractéristique dont le coefficient est le plus important l'ai également avec des autres coefficient. Les coefficients de cette composante ont une grande disparité et demande à être normalisé. En effet, étant donné qu'ils ont une valeur beaucoup plus importante que les autres coefficients lors des analyses il dissimule les variations des autres coefficients.
-# matrice C = matrice des produits scalaire
+# On remarque que la caractéristique dont le coefficient est le plus important l'ai également avec des autres coefficient. De plus, la matrice de corrélation est la matrice des produits scalaire. Les coefficients de cette composante ont une grande disparité et demande à être normalisé. En effet, étant donné qu'ils ont une valeur beaucoup plus importante que les autres coefficients lors des analyses il dissimule les variations des autres coefficients.
+#
 #
 #
 
@@ -615,13 +657,14 @@ Y_mean = matrix_X.sum(axis=0)*1/(len(matrix_X))
 Y_standard_deviation = matrix_X.std(0)
 
 Y_std = (matrix_X-Y_mean)/Y_standard_deviation
-Y_std
+Y_std #matrice standardisée
 
 
 matrix_YT = np.transpose(Y_std)
-C_Y = np.dot(matrix_YT, Y_std)
+C_Y = np.dot(matrix_YT, Y_std)#matrice de corélation standardisée 
 
-Y_eigv, Y_vect = np.linalg.eig(C_Y)
+Y_eigv, Y_vect = np.linalg.eig(C_Y) #valeurs propres et vecteurs propre de la matrice de corélation standardisée 
+
 
 
 # %%
@@ -629,14 +672,19 @@ X = [a for a in range(len(Y_eigv))]
 Y = [np.log10(a) for a in Y_eigv]
 plt.plot(X, Y, color='black')
 plt.scatter(X, Y, color='black')
+plt.xlabel("Puissance de 10")
+plt.ylabel("log des valeurs propres")
 
 # %%
 Y_eigv_sort = np.sort(Y_eigv)[::-1]
 Y_alpha = Y_eigv_sort.copy()
 for i in range(len(Y_eigv_sort)):
     Y_alpha[i] = sum(Y_eigv_sort[:i+1])/sum(Y_eigv_sort)
+    
 plt.plot(X, Y_alpha, color='black')
 plt.scatter(X, Y_alpha, color='black')
+plt.xlabel("i")
+plt.ylabel("alpha i")
 
 # %% [markdown]
 # ### Importance des composantes principales
@@ -646,7 +694,7 @@ plt.scatter(X, Y_alpha, color='black')
 
 # %%
 Y_alpha[2]
-# 86% de l'information est contenu par la 3 première composantes
+# 86% de l'information est contenu par les 3 premières composantes
 
 # %% [markdown]
 # Cette part d'information est satisfaisante car nous avons tout de même réduit notre dimension de 9 à 3.
@@ -662,20 +710,18 @@ Y_alpha[2]
 
 # %%
 
-P1 = Y*np.transpose(Y_vect[0])
-P2 = Y*np.transpose(Y_vect[1])
-P3 = Y*np.transpose(Y_vect[2])
+P1 = Y_std@np.transpose(Y_vect[0])
+P2 = Y_std@np.transpose(Y_vect[1])
+P3 = Y_std@np.transpose(Y_vect[2])
+P4 = Y_std@np.transpose(Y_vect[3])
+P5 = Y_std@np.transpose(Y_vect[4])
 
-print(P1, P2, P3)
-correlation_plot(P1, P2, xlabel='P1', ylabel='P2')
 
-correlation_plot(P1, P3, xlabel='P1', ylabel='P3')
-P1_ = np.sort(P1)
-P2_ = np.sort(P2)
-P3_ = np.sort(P3)
-correlation_plot(P1_, P2_, xlabel='P1', ylabel='P2')
+correlation_plot2(P1, P2, xlabel='P1', ylabel='P2')
+plt.show()
+correlation_plot2(P1, P3, xlabel='P1', ylabel='P3')
+plt.show()
 
-correlation_plot(P1_, P3_, xlabel='P1', ylabel='P3')
 
 # %% [markdown]
 # Tracez les nuages de points correspondants dans les plans (P1, P2) et (P1, P3).
@@ -692,9 +738,33 @@ reload(plt)
 # %%
 Y_mean_tab = df.sum(axis=0)*1/(len(df))
 Y_standard_deviation_tab = df.std(0)
-
 Y_std_tab = (df-Y_mean_tab)/Y_standard_deviation_tab
 
+
+# %%
+dfY = pd.DataFrame({"P1":P1,"P2":P2,"P3":P3,"P4":P4,"P5":P5}) 
+df_2=df = pd.read_csv("defect_data.csv", usecols=range(10))
+dfY=dfY.set_index(df_2['id'])
+
+"""
+si on met seulement P1,P2,P3 
+on obtient un patatoïde (1125) 
+si on rajoute P4 
+on se raproche d'une forme avec des excroissances (3415) 
+Si on rajoute enfin P5 
+On obtient bien le défaut attendu (796)
+"""
+
+# %%
+dfY=dfY-dfY.loc[4022]
+mat_Y2 = dfY.to_numpy()
+dist_Y2 = np.apply_along_axis(np.linalg.norm, 1, mat_Y2)
+dfY = dfY.assign(dist=dist_Y2)
+dfY = dfY.drop(index=4022)
+min_ind = dfY.index[dfY['dist'].argmin()]
+print(dfY.loc[min_ind])
+
+plot_defect(min_ind)
 
 # %%
 Y_std_tab_1 = Y_std_tab-Y_std_tab.loc[4022]
@@ -707,6 +777,15 @@ print(Y_std_tab_1.loc[min_ind])
 
 plot_defect(min_ind)
 
+
+# %% [markdown]
+# Ici on remarque que si on calcul la distance sur la matrice standardisée on obtient bien le même défaut qu'avec les projections.
+
+# %% [markdown]
+# ***On trouve bien une patatoïde avec des excroissances ce qui est beaucoup plus proche du défaut 4022!!***
+#
+#
+#
 
 # %%
 # %matplotlib inline
